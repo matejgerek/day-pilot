@@ -1,6 +1,5 @@
 import typer
 from rich.console import Console
-from rich.table import Table
 
 from daypilot.start import create_planning_agent
 from daypilot.state import DayPlanState

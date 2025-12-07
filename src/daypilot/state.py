@@ -1,5 +1,7 @@
 from typing import TypedDict
+
 from langgraph.graph import MessagesState
+
 
 class Task(TypedDict):
     title: str
