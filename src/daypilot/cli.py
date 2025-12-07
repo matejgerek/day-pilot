@@ -11,6 +11,16 @@ console = Console()
 @app.command()
 def plan():
     """Create today's plan (test command)."""
+    header_lines = [
+        "[bold blue]╔══════════════════════════════════════════════════════════╗[/bold blue]",
+        "[bold blue]║  🎯 DayPilot - Your Adaptive Workday Co-pilot            ║[/bold blue]",
+        "[bold blue]╚══════════════════════════════════════════════════════════╝[/bold blue]",
+    ]
+    console.print()
+    for line in header_lines:
+        console.print(line)
+    console.print()
+
     agent = create_planning_agent()
 
     initial_state = DayPlanState(
