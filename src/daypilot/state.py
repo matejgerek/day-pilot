@@ -23,3 +23,5 @@ class DayPlanState(MessagesState):
     # Processed data
     tasks: list[Task]
     schedule: list[TimeBlock]
+    non_negotiables: list[str]
+    nice_to_haves: list[str]

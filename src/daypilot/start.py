@@ -1,4 +1,6 @@
+import os
 
+from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
 
 from daypilot.start_nodes import (
@@ -8,6 +10,12 @@ from daypilot.start_nodes import (
     present_plan_node,
 )
 from daypilot.state import DayPlanState
+
+load_dotenv()
+
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    raise ValueError("OPENAI_API_KEY is not set")
 
 
 def create_planning_agent():
