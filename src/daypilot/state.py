@@ -21,6 +21,7 @@ class DayPlanState(MessagesState):
     fixed_commitments: list[str]
 
     # Processed data
+    total_available_hours: float
     tasks: list[Task]
     schedule: list[TimeBlock]
     non_negotiables: list[str]

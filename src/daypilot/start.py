@@ -3,19 +3,20 @@ import os
 from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
 
-from daypilot.start_nodes import (
-    analyze_priorities_node,
-    create_schedule_node,
-    gather_input_node,
-    present_plan_node,
-)
-from daypilot.state import DayPlanState
-
 load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("OPENAI_API_KEY is not set")
+
+# Import nodes after env is loaded so ChatOpenAI sees the key
+from daypilot.start_nodes import (  # noqa: E402
+    analyze_priorities_node,
+    create_schedule_node,
+    gather_input_node,
+    present_plan_node,
+)
+from daypilot.state import DayPlanState  # noqa: E402
 
 
 def create_planning_agent():

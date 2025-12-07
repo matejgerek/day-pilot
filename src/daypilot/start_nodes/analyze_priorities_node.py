@@ -68,16 +68,20 @@ Your task:
     response = analyzer.invoke(prompt)
     console.print(response.model_dump_json())
 
-    state["non_negotiables"] = [task.title for task in response.non_negotiables]
-    state["nice_to_haves"] = [task.title for task in response.nice_to_haves]
-    state["total_available_hours"] = response.total_available_hours
-
-    console.print("Strategy note: " + response.strategy_note)
-
+    result = response.model_dump()
+    
+    # Update state
+    state["non_negotiables"] = [task["title"] for task in result["non_negotiables"]]
+    state["nice_to_haves"] = [task["title"] for task in result["nice_to_haves"]]
+    state["total_available_hours"] = result["total_available_hours"]
+    
+    # Store all tasks
+    state["tasks"] = result["non_negotiables"] + result["nice_to_haves"]
+    
     # Store messages for context
     state["messages"] = [
         {"role": "user", "content": prompt},
-        {"role": "assistant", "content": response.model_dump_json()},
+        {"role": "assistant", "content": response.model_dump_json()}
     ]
-
+    
     return state
