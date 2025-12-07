@@ -1,0 +1,35 @@
+import typer
+from rich.console import Console
+from rich.table import Table
+
+from daypilot.start import create_planning_agent
+from daypilot.state import DayPlanState
+
+app = typer.Typer()
+
+console = Console()
+
+@app.command()
+def plan():
+    """Create today's plan (test command)."""
+    agent = create_planning_agent()
+
+    initial_state = DayPlanState(
+        priorities=[],
+        work_hours="",
+        fixed_commitments=[],
+    )
+
+    final_state = agent.invoke(initial_state)
+    console.print(final_state)
+
+@app.command()
+def execute():
+    """Execute today's plan (test command)."""
+    typer.echo("Executing...")
+
+def main():
+    app()
+
+if __name__ == "__main__":
+    main()

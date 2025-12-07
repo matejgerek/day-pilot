@@ -1,0 +1,15 @@
+[project]
+name = "daypilot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain-openai>=1.1.0",
+    "langgraph>=1.0.4",
+    "rich>=14.2.0",
+    "typer>=0.20.0",
+]
+
+[project.scripts]
+cli = "daypilot.cli:app"
