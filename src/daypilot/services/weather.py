@@ -149,7 +149,10 @@ class WeatherService:
         )
         response = responses[0]
 
-        tz = ZoneInfo(response.Timezone())
+        tz_name = response.Timezone()
+        if isinstance(tz_name, bytes):
+            tz_name = tz_name.decode()
+        tz = ZoneInfo(str(tz_name))
         now_local = now.astimezone(tz)
         midnight = (now_local + timedelta(days=1)).replace(
             hour=0, minute=0, second=0, microsecond=0
