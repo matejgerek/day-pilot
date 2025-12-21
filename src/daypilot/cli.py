@@ -8,6 +8,7 @@ app = typer.Typer()
 
 console = Console()
 
+
 @app.command()
 def plan():
     """Create today's plan (test command)."""
@@ -32,13 +33,16 @@ def plan():
     final_state = agent.invoke(initial_state)
     console.print(final_state)
 
+
 @app.command()
 def execute():
     """Execute today's plan (test command)."""
     typer.echo("Executing...")
 
+
 def main():
     app()
+
 
 if __name__ == "__main__":
     main()

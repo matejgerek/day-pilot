@@ -8,6 +8,7 @@ console = Console()
 
 llm = ChatOpenAI(model="gpt-5-mini", reasoning_effort="low")
 
+
 class NonNegotiableTask(BaseModel):
     title: str = Field(
         description="Name of the task.",
@@ -19,6 +20,7 @@ class NonNegotiableTask(BaseModel):
         description="Why this task is critical and must be completed today.",
     )
 
+
 class NiceToHaveTask(BaseModel):
     title: str = Field(
         description="Name of the task.",
@@ -26,6 +28,7 @@ class NiceToHaveTask(BaseModel):
     duration_hours: float = Field(
         description="Estimated time needed in hours.",
     )
+
 
 class PrioritiesAnalysis(BaseModel):
     non_negotiables: list[NonNegotiableTask] = Field(
@@ -40,6 +43,7 @@ class PrioritiesAnalysis(BaseModel):
     strategy_note: str = Field(
         description="Brief note about the planning strategy.",
     )
+
 
 analyzer = llm.with_structured_output(PrioritiesAnalysis)
 
@@ -69,19 +73,19 @@ Your task:
     console.print(response.model_dump_json())
 
     result = response.model_dump()
-    
+
     # Update state
     state["non_negotiables"] = [task["title"] for task in result["non_negotiables"]]
     state["nice_to_haves"] = [task["title"] for task in result["nice_to_haves"]]
     state["total_available_hours"] = result["total_available_hours"]
-    
+
     # Store all tasks
     state["tasks"] = result["non_negotiables"] + result["nice_to_haves"]
-    
+
     # Store messages for context
     state["messages"] = [
         {"role": "user", "content": prompt},
-        {"role": "assistant", "content": response.model_dump_json()}
+        {"role": "assistant", "content": response.model_dump_json()},
     ]
-    
+
     return state

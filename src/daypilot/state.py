@@ -8,16 +8,18 @@ class Task(TypedDict):
     duration_hours: float
     is_non_negotiable: bool
 
+
 class TimeBlock(TypedDict):
     start_time: str
     end_time: str
     task: str
     is_fixed: bool
 
+
 class DayPlanState(MessagesState):
     # Inputs
     priorities: list[str]
-    work_hours: str # e.g., "9am-5pm"
+    work_hours: str  # e.g., "9am-5pm"
     fixed_commitments: list[str]
 
     # Processed data
