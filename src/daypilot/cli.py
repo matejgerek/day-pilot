@@ -42,9 +42,38 @@ def execute():
 
 @app.command()
 def init():
-    """Initialize local settings (placeholder)."""
-    console.print("[yellow]Init setup is not implemented yet.[/yellow]")
-    console.print("TODO: prompt for location and store config.")
+    """Initialize local settings (location only)."""
+    from daypilot.services.location_normalization import (
+        LocationNormalizationError,
+        LocationNormalizer,
+    )
+
+    console.print("[bold blue]DayPilot setup[/bold blue]")
+    normalizer = LocationNormalizer()
+
+    while True:
+        raw_location = typer.prompt("Enter your location (city/region)")
+        try:
+            normalized = normalizer.resolve(raw_location)
+        except LocationNormalizationError as exc:
+            console.print(f"[red]Could not resolve location: {exc}[/red]")
+            if not typer.confirm("Try again?", default=True):
+                return
+            continue
+
+        if not normalized.canonical_name:
+            console.print("[red]Could not resolve a canonical location name.[/red]")
+            if not typer.confirm("Try again?", default=True):
+                return
+            continue
+
+        console.print(f"I found: [bold]{normalized.canonical_name}[/bold]")
+        if typer.confirm("Use this location?", default=True):
+            console.print(f"[green]Location set to {normalized.canonical_name}[/green]")
+            console.print(f"Coordinates: {normalized.latitude}, {normalized.longitude}")
+            if normalized.timezone:
+                console.print(f"Timezone: {normalized.timezone}")
+            return
 
 
 def main():
