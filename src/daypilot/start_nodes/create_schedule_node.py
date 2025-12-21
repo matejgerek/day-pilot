@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -32,7 +33,7 @@ class SchedulePlan(BaseModel):
     )
 
 
-llm = ChatOpenAI(model="gpt-5-mini", reasoning_effort="low")
+llm = ChatOpenAI(model="gpt-5-mini", reasoning_effort="medium")
 scheduler = llm.with_structured_output(SchedulePlan)
 
 
@@ -41,10 +42,12 @@ def create_schedule_node(state: DayPlanState) -> DayPlanState:
     tasks_json = json.dumps(state["tasks"], indent=2)
     commitments_text = "\n".join(f"- {c}" for c in state["fixed_commitments"]) or "None"
     now_str = state["now"].strftime("%A, %B %d, %Y at %I:%M %p")
+    rounded_start = _ceil_time_to_5_minutes(state["now"]).strftime("%H:%M")
 
     prompt = f"""Create a time-blocked schedule for the workday.
 
 Current date and time: {now_str}
+Scheduling start time: {rounded_start} (nearest 5-minute boundary at or after now)
 Work hours: {state["work_hours"]}
 Available hours: {state["total_available_hours"]}
 
@@ -63,6 +66,10 @@ Rules:
 3. Include breaks (lunch, short breaks)
 4. Work around fixed commitments
 5. Be realistic about energy levels throughout the day
+6. Use 5-minute granularity for all times:
+   - Every start/end time must be in HH:MM where minutes are a multiple of 5 (00, 05, 10, ...)
+7. The first schedulable block must start at {rounded_start} or later,
+   unless it is a fixed commitment already in progress
 
 Return a realistic schedule with precise start/end times and flag fixed commitments."""
 
@@ -92,3 +99,16 @@ def _whoop_prompt(state: DayPlanState) -> str:
     except Exception:
         return "WHOOP: Unavailable."
     return snapshot.format_for_prompt()
+
+
+def _ceil_time_to_5_minutes(dt: datetime) -> datetime:
+    base = dt.replace(second=0, microsecond=0)
+    remainder = base.minute % 5
+    needs_next_slot = dt.second != 0 or dt.microsecond != 0
+    if remainder == 0 and not needs_next_slot:
+        return base
+
+    delta_minutes = (5 - remainder) if remainder else 5
+    if remainder != 0:
+        return base + timedelta(minutes=delta_minutes)
+    return base + timedelta(minutes=5)

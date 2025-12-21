@@ -1,17 +1,18 @@
 ---
 id: task-004
 title: WHOOP OAuth integration for CLI (local callback flow)
-status: In Progress
+status: Done
 assignee:
   - Codex
 created_date: '2025-12-21 16:28'
-updated_date: '2025-12-21 16:43'
+updated_date: '2025-12-21 17:22'
 labels:
   - whoop
   - cli
   - oauth
 dependencies: []
 priority: high
+ordinal: 250
 ---
 
 ## Description
