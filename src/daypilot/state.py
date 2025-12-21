@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from langgraph.graph import MessagesState
 
@@ -30,3 +30,4 @@ class DayPlanState(MessagesState):
     schedule: list[TimeBlock]
     non_negotiables: list[str]
     nice_to_haves: list[str]
+    weather: dict[str, Any] | None

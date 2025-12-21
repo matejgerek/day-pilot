@@ -3,6 +3,7 @@ import json
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
+from daypilot.services.weather import WeatherService
 from daypilot.state import DayPlanState
 
 
@@ -49,6 +50,8 @@ Available hours: {state["total_available_hours"]}
 Fixed commitments:
 {commitments_text}
 
+{_weather_prompt(state)}
+
 Tasks to schedule:
 {tasks_json}
 
@@ -68,3 +71,11 @@ Return a realistic schedule with precise start/end times and flag fixed commitme
     state["messages"].append({"role": "assistant", "content": response.model_dump_json()})
 
     return state
+
+
+def _weather_prompt(state: DayPlanState) -> str:
+    weather_data = state.get("weather")
+    if not weather_data:
+        return "Weather: Unavailable."
+    service = WeatherService()
+    return service.format_from_dict(weather_data)
