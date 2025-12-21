@@ -1,12 +1,9 @@
-import os
-
-from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
 
-load_dotenv()
+from daypilot.settings import get_settings
 
-openai_api_key = os.getenv("OPENAI_API_KEY")
-if not openai_api_key:
+settings = get_settings()
+if not settings.openai_api_key:
     raise ValueError("OPENAI_API_KEY is not set")
 
 # Import nodes after env is loaded so ChatOpenAI sees the key
