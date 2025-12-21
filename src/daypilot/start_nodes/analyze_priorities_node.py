@@ -2,6 +2,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from rich.console import Console
 
+from daypilot.services.whoop_data import WhoopSnapshot
 from daypilot.state import DayPlanState
 
 console = Console()
@@ -62,6 +63,9 @@ Work hours: {state["work_hours"]}
 Fixed commitments:
 {commitments_text if commitments_text else "None"}
 
+Health context:
+{_whoop_prompt(state)}
+
 Priorities:
 {priorities_text}
 
@@ -91,3 +95,14 @@ Your task:
     ]
 
     return state
+
+
+def _whoop_prompt(state: DayPlanState) -> str:
+    whoop_data = state.get("whoop")
+    if not whoop_data:
+        return "WHOOP: Unavailable."
+    try:
+        snapshot = WhoopSnapshot.from_dict(whoop_data)
+    except Exception:
+        return "WHOOP: Unavailable."
+    return snapshot.format_for_prompt()

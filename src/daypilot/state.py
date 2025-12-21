@@ -31,3 +31,4 @@ class DayPlanState(MessagesState):
     non_negotiables: list[str]
     nice_to_haves: list[str]
     weather: dict[str, Any] | None
+    whoop: dict[str, Any] | None

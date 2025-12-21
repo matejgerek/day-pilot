@@ -4,6 +4,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
 from daypilot.services.weather import WeatherService
+from daypilot.services.whoop_data import WhoopSnapshot
 from daypilot.state import DayPlanState
 
 
@@ -51,6 +52,7 @@ Fixed commitments:
 {commitments_text}
 
 {_weather_prompt(state)}
+{_whoop_prompt(state)}
 
 Tasks to schedule:
 {tasks_json}
@@ -79,3 +81,14 @@ def _weather_prompt(state: DayPlanState) -> str:
         return "Weather: Unavailable."
     service = WeatherService()
     return service.format_from_dict(weather_data)
+
+
+def _whoop_prompt(state: DayPlanState) -> str:
+    whoop_data = state.get("whoop")
+    if not whoop_data:
+        return "WHOOP: Unavailable."
+    try:
+        snapshot = WhoopSnapshot.from_dict(whoop_data)
+    except Exception:
+        return "WHOOP: Unavailable."
+    return snapshot.format_for_prompt()

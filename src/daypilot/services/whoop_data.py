@@ -41,6 +41,19 @@ class WhoopCycle:
     score_state: str
     score: dict[str, Any] | None
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "created_at": _format_datetime(self.created_at),
+            "updated_at": _format_datetime(self.updated_at),
+            "start": _format_datetime(self.start),
+            "end": _format_datetime(self.end),
+            "timezone_offset": self.timezone_offset,
+            "score_state": self.score_state,
+            "score": self.score,
+        }
+
 
 @dataclass(frozen=True)
 class WhoopSleep:
@@ -56,6 +69,21 @@ class WhoopSleep:
     score_state: str
     score: dict[str, Any] | None
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "cycle_id": self.cycle_id,
+            "user_id": self.user_id,
+            "created_at": _format_datetime(self.created_at),
+            "updated_at": _format_datetime(self.updated_at),
+            "start": _format_datetime(self.start),
+            "end": _format_datetime(self.end),
+            "timezone_offset": self.timezone_offset,
+            "nap": self.nap,
+            "score_state": self.score_state,
+            "score": self.score,
+        }
+
 
 @dataclass(frozen=True)
 class WhoopRecovery:
@@ -66,6 +94,17 @@ class WhoopRecovery:
     updated_at: datetime
     score_state: str
     score: dict[str, Any] | None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "cycle_id": self.cycle_id,
+            "sleep_id": self.sleep_id,
+            "user_id": self.user_id,
+            "created_at": _format_datetime(self.created_at),
+            "updated_at": _format_datetime(self.updated_at),
+            "score_state": self.score_state,
+            "score": self.score,
+        }
 
 
 @dataclass(frozen=True)
@@ -82,6 +121,21 @@ class WhoopWorkout:
     sport_id: int | None
     score: dict[str, Any] | None
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "created_at": _format_datetime(self.created_at),
+            "updated_at": _format_datetime(self.updated_at),
+            "start": _format_datetime(self.start),
+            "end": _format_datetime(self.end),
+            "timezone_offset": self.timezone_offset,
+            "sport_name": self.sport_name,
+            "score_state": self.score_state,
+            "sport_id": self.sport_id,
+            "score": self.score,
+        }
+
 
 @dataclass(frozen=True)
 class WhoopProfile:
@@ -90,12 +144,27 @@ class WhoopProfile:
     first_name: str
     last_name: str
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "user_id": self.user_id,
+            "email": self.email,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+        }
+
 
 @dataclass(frozen=True)
 class WhoopBodyMeasurement:
     height_meter: float
     weight_kilogram: float
     max_heart_rate: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "height_meter": self.height_meter,
+            "weight_kilogram": self.weight_kilogram,
+            "max_heart_rate": self.max_heart_rate,
+        }
 
 
 @dataclass(frozen=True)
@@ -106,6 +175,127 @@ class WhoopSnapshot:
     workouts: list[WhoopWorkout]
     profile: WhoopProfile | None
     body: WhoopBodyMeasurement | None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "cycle": self.cycle.to_dict() if self.cycle else None,
+            "recovery": self.recovery.to_dict() if self.recovery else None,
+            "sleep": self.sleep.to_dict() if self.sleep else None,
+            "workouts": [workout.to_dict() for workout in self.workouts],
+            "profile": self.profile.to_dict() if self.profile else None,
+            "body": self.body.to_dict() if self.body else None,
+        }
+
+    @staticmethod
+    def from_dict(data: dict[str, Any]) -> "WhoopSnapshot":
+        cycle = _parse_cycle_dict(data.get("cycle"))
+        recovery = _parse_recovery_dict(data.get("recovery"))
+        sleep = _parse_sleep_dict(data.get("sleep"))
+        workouts_raw = data.get("workouts", [])
+        workouts: list[WhoopWorkout] = []
+        if isinstance(workouts_raw, list):
+            for entry in workouts_raw:
+                parsed = _parse_workout_dict(entry)
+                if parsed:
+                    workouts.append(parsed)
+        profile = _parse_profile_dict(data.get("profile"))
+        body = _parse_body_measurement_dict(data.get("body"))
+        return WhoopSnapshot(
+            cycle=cycle,
+            recovery=recovery,
+            sleep=sleep,
+            workouts=workouts,
+            profile=profile,
+            body=body,
+        )
+
+    def format_for_prompt(self) -> str:
+        if not any([self.cycle, self.recovery, self.sleep, self.workouts]):
+            return "WHOOP: No data available."
+
+        local_tz = datetime.now().astimezone().tzinfo
+        today = datetime.now().astimezone().date()
+        lines = ["WHOOP snapshot (most recent data):"]
+
+        if self.recovery:
+            if self.recovery.score_state != "SCORED":
+                lines.append(f"Recovery: {self.recovery.score_state} (not yet available)")
+            else:
+                score = _score_value(self.recovery.score, "recovery_score", suffix="%")
+                hrv = _score_value(self.recovery.score, "hrv_rmssd_milli", suffix=" ms")
+                rhr = _score_value(self.recovery.score, "resting_heart_rate", suffix=" bpm")
+                details = _join_parts(
+                    [
+                        score and f"score {score}",
+                        hrv and f"HRV (RMSSD) {hrv}",
+                        rhr and f"RHR {rhr}",
+                    ]
+                )
+                lines.append(f"Recovery (from last sleep): {details}")
+
+        if self.sleep:
+            sleep_start = _format_dt(self.sleep.start, local_tz)
+            sleep_end = _format_dt(self.sleep.end, local_tz)
+            duration_hours = _duration_hours(self.sleep.start, self.sleep.end)
+            duration = f"{duration_hours:.1f}h" if duration_hours else "Unknown duration"
+            nap = "nap" if self.sleep.nap else "overnight"
+            if self.sleep.score_state != "SCORED":
+                lines.append(f"Sleep ({nap}): {sleep_start} → {sleep_end} | {duration}")
+            else:
+                performance = _score_value(
+                    self.sleep.score,
+                    "sleep_performance_percentage",
+                    suffix="%",
+                )
+                efficiency = _score_value(
+                    self.sleep.score,
+                    "sleep_efficiency_percentage",
+                    suffix="%",
+                )
+                details = _join_parts(
+                    [
+                        f"{sleep_start} → {sleep_end}",
+                        duration,
+                        performance and f"performance {performance}",
+                        efficiency and f"efficiency {efficiency}",
+                    ]
+                )
+                lines.append(f"Sleep ({nap}): {details}")
+
+        if self.cycle:
+            cycle_start = _format_dt(self.cycle.start, local_tz)
+            cycle_end = _format_dt(self.cycle.end, local_tz) if self.cycle.end else "ongoing"
+            if self.cycle.score_state != "SCORED":
+                lines.append(f"Cycle: {cycle_start} → {cycle_end}")
+            else:
+                strain = _score_value(self.cycle.score, "strain")
+                strain_part = f"strain {strain}" if strain else None
+                lines.append(f"Cycle: {cycle_start} → {cycle_end} | {_join_parts([strain_part])}")
+
+        if self.workouts:
+            workouts_lines: list[str] = []
+            for workout in self.workouts[:3]:
+                start_local = workout.start.astimezone(local_tz) if local_tz else workout.start
+                day_label = _relative_day_label(start_local.date(), today)
+                time_label = start_local.strftime("%H:%M")
+                duration = _duration_hours(workout.start, workout.end)
+                duration_label = f"{duration:.1f}h" if duration else None
+                strain = _score_value(workout.score, "strain")
+                details = _join_parts(
+                    [
+                        duration_label and f"duration {duration_label}",
+                        strain and f"strain {strain}",
+                    ]
+                )
+                label = f"- {day_label} {time_label} — {workout.sport_name}"
+                if details:
+                    label = f"{label} ({details})"
+                workouts_lines.append(label)
+
+            lines.append("Recent workouts (most recent first; may include yesterday):")
+            lines.extend(workouts_lines)
+
+        return "\n".join(lines)
 
 
 class WhoopDataService:
@@ -442,6 +632,93 @@ def _parse_datetime(value: str) -> datetime:
     return parsed
 
 
+def _parse_cycle_dict(value: Any) -> WhoopCycle | None:
+    if not isinstance(value, dict):
+        return None
+    return WhoopCycle(
+        id=_required_int(value, "id"),
+        user_id=_required_int(value, "user_id"),
+        created_at=_required_datetime(value, "created_at"),
+        updated_at=_required_datetime(value, "updated_at"),
+        start=_required_datetime(value, "start"),
+        end=_optional_datetime(value.get("end")),
+        timezone_offset=_required_str(value, "timezone_offset"),
+        score_state=_required_str(value, "score_state"),
+        score=_optional_dict(value.get("score")),
+    )
+
+
+def _parse_sleep_dict(value: Any) -> WhoopSleep | None:
+    if not isinstance(value, dict):
+        return None
+    return WhoopSleep(
+        id=_required_str(value, "id"),
+        cycle_id=_required_int(value, "cycle_id"),
+        user_id=_required_int(value, "user_id"),
+        created_at=_required_datetime(value, "created_at"),
+        updated_at=_required_datetime(value, "updated_at"),
+        start=_required_datetime(value, "start"),
+        end=_required_datetime(value, "end"),
+        timezone_offset=_required_str(value, "timezone_offset"),
+        nap=_required_bool(value, "nap"),
+        score_state=_required_str(value, "score_state"),
+        score=_optional_dict(value.get("score")),
+    )
+
+
+def _parse_recovery_dict(value: Any) -> WhoopRecovery | None:
+    if not isinstance(value, dict):
+        return None
+    return WhoopRecovery(
+        cycle_id=_required_int(value, "cycle_id"),
+        sleep_id=_required_str(value, "sleep_id"),
+        user_id=_required_int(value, "user_id"),
+        created_at=_required_datetime(value, "created_at"),
+        updated_at=_required_datetime(value, "updated_at"),
+        score_state=_required_str(value, "score_state"),
+        score=_optional_dict(value.get("score")),
+    )
+
+
+def _parse_workout_dict(value: Any) -> WhoopWorkout | None:
+    if not isinstance(value, dict):
+        return None
+    return WhoopWorkout(
+        id=_required_str(value, "id"),
+        user_id=_required_int(value, "user_id"),
+        created_at=_required_datetime(value, "created_at"),
+        updated_at=_required_datetime(value, "updated_at"),
+        start=_required_datetime(value, "start"),
+        end=_required_datetime(value, "end"),
+        timezone_offset=_required_str(value, "timezone_offset"),
+        sport_name=_required_str(value, "sport_name"),
+        score_state=_required_str(value, "score_state"),
+        sport_id=_optional_int(value.get("sport_id")),
+        score=_optional_dict(value.get("score")),
+    )
+
+
+def _parse_profile_dict(value: Any) -> WhoopProfile | None:
+    if not isinstance(value, dict):
+        return None
+    return WhoopProfile(
+        user_id=_required_int(value, "user_id"),
+        email=_required_str(value, "email"),
+        first_name=_required_str(value, "first_name"),
+        last_name=_required_str(value, "last_name"),
+    )
+
+
+def _parse_body_measurement_dict(value: Any) -> WhoopBodyMeasurement | None:
+    if not isinstance(value, dict):
+        return None
+    return WhoopBodyMeasurement(
+        height_meter=_required_float(value, "height_meter"),
+        weight_kilogram=_required_float(value, "weight_kilogram"),
+        max_heart_rate=_required_int(value, "max_heart_rate"),
+    )
+
+
 def _required_str(data: dict[str, Any], key: str) -> str:
     value = data.get(key)
     if not isinstance(value, str) or not value.strip():
@@ -454,6 +731,56 @@ def _optional_str(value: Any) -> str | None:
         return None
     value_str = str(value).strip()
     return value_str or None
+
+
+def _score_value(score: dict[str, Any] | None, key: str, suffix: str = "") -> str | None:
+    if not score:
+        return None
+    value = score.get(key)
+    if value is None:
+        return None
+    try:
+        if isinstance(value, bool):
+            value_str = str(value).lower()
+        elif isinstance(value, int):
+            value_str = str(value)
+        elif isinstance(value, float):
+            value_str = f"{value:.1f}"
+        else:
+            value_str = str(value)
+    except (TypeError, ValueError):
+        value_str = str(value)
+    return f"{value_str}{suffix}"
+
+
+def _join_parts(parts: list[str | None]) -> str:
+    return " | ".join(part for part in parts if part)
+
+
+def _duration_hours(start: datetime | None, end: datetime | None) -> float | None:
+    if not start or not end:
+        return None
+    delta = end - start
+    hours = delta.total_seconds() / 3600
+    return hours if hours >= 0 else None
+
+
+def _format_dt(value: datetime, tz: Any) -> str:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    try:
+        localized = value.astimezone(tz) if tz else value
+    except Exception:
+        localized = value
+    return localized.strftime("%Y-%m-%d %H:%M")
+
+
+def _relative_day_label(day: Any, today: Any) -> str:
+    if day == today:
+        return "Today"
+    if day == today - timedelta(days=1):
+        return "Yesterday"
+    return str(day)
 
 
 def _required_int(data: dict[str, Any], key: str) -> int:
