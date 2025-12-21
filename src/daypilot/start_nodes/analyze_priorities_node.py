@@ -76,7 +76,6 @@ Your task:
 4. Calculate total available work hours after accounting for commitments
 """
     response = analyzer.invoke(prompt)
-    console.print(response.model_dump_json())
 
     result = response.model_dump()
 
