@@ -40,6 +40,13 @@ def execute():
     typer.echo("Executing...")
 
 
+@app.command()
+def init():
+    """Initialize local settings (placeholder)."""
+    console.print("[yellow]Init setup is not implemented yet.[/yellow]")
+    console.print("TODO: prompt for location and store config.")
+
+
 def main():
     app()
 
