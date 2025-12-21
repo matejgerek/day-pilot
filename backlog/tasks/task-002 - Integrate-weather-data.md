@@ -1,16 +1,16 @@
 ---
 id: task-002
 title: Integrate weather data
-status: In Progress
+status: Done
 assignee: []
 created_date: '2025-12-21 14:09'
-updated_date: '2025-12-21 15:14'
+updated_date: '2025-12-21 15:48'
 labels:
   - integration
   - weather
 dependencies:
   - task-003
-ordinal: 1000
+ordinal: 500
 ---
 
 ## Description

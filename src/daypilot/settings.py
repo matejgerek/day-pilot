@@ -11,8 +11,8 @@ class Settings(BaseSettings):
 
     openai_api_key: str
     opencage_api_key: str
-    whoop_client_id: str
-    whoop_client_secret: str
+    whoop_client_id: str | None = None
+    whoop_client_secret: str | None = None
 
 
 @lru_cache
