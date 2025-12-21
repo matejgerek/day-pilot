@@ -1,16 +1,17 @@
 ---
 id: task-003
 title: User location normalization via OpenCage (init command)
-status: In Progress
+status: Done
 assignee: []
 created_date: '2025-12-21 14:24'
-updated_date: '2025-12-21 14:28'
+updated_date: '2025-12-21 15:01'
 labels:
   - location
   - integration
   - weather
   - cli
 dependencies: []
+ordinal: 1000
 ---
 
 ## Description
