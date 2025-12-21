@@ -38,6 +38,70 @@ class WeatherReport:
     hourly: list[HourlyForecast]
     timezone: str
 
+    @staticmethod
+    def from_dict(data: dict[str, Any]) -> "WeatherReport":
+        overview_data = data.get("overview", {})
+        hourly_data = data.get("hourly", [])
+        timezone_name = data.get("timezone", "UTC")
+        tz = ZoneInfo(timezone_name)
+
+        overview = DailyOverview(
+            summary=str(overview_data.get("summary", "Unknown")),
+            temperature_min_c=_optional_number(overview_data.get("temperature_min_c")),
+            temperature_max_c=_optional_number(overview_data.get("temperature_max_c")),
+            precipitation_probability_max=_optional_number(
+                overview_data.get("precipitation_probability_max")
+            ),
+            wind_speed_max_kph=_optional_number(overview_data.get("wind_speed_max_kph")),
+        )
+
+        hourly: list[HourlyForecast] = []
+        for entry in hourly_data:
+            if not isinstance(entry, dict):
+                continue
+            time_str = entry.get("time")
+            if not time_str:
+                continue
+            time_value = datetime.fromisoformat(time_str)
+            if time_value.tzinfo is None:
+                time_value = time_value.replace(tzinfo=tz)
+
+            hourly.append(
+                HourlyForecast(
+                    time=time_value,
+                    temperature_c=float(entry.get("temperature_c")),
+                    precipitation_probability=_optional_number(
+                        entry.get("precipitation_probability")
+                    ),
+                    wind_speed_kph=_optional_number(entry.get("wind_speed_kph")),
+                    condition=_optional_str(entry.get("condition")),
+                )
+            )
+
+        return WeatherReport(overview=overview, hourly=hourly, timezone=timezone_name)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "overview": {
+                "summary": self.overview.summary,
+                "temperature_min_c": self.overview.temperature_min_c,
+                "temperature_max_c": self.overview.temperature_max_c,
+                "precipitation_probability_max": self.overview.precipitation_probability_max,
+                "wind_speed_max_kph": self.overview.wind_speed_max_kph,
+            },
+            "hourly": [
+                {
+                    "time": entry.time.isoformat(),
+                    "temperature_c": entry.temperature_c,
+                    "precipitation_probability": entry.precipitation_probability,
+                    "wind_speed_kph": entry.wind_speed_kph,
+                    "condition": entry.condition,
+                }
+                for entry in self.hourly
+            ],
+            "timezone": self.timezone,
+        }
+
 
 class WeatherServiceError(RuntimeError):
     """Raised when weather data cannot be fetched or parsed."""
@@ -155,6 +219,9 @@ class WeatherService:
 
         return "\n".join(lines)
 
+    def format_from_dict(self, data: dict[str, Any]) -> str:
+        return self.format_for_prompt(WeatherReport.from_dict(data))
+
 
 def _build_time_range(
     start_timestamp: int,
@@ -178,6 +245,22 @@ def _optional_float(values: np.ndarray, index: int) -> float | None:
     if value is None or np.isnan(value):
         return None
     return float(value)
+
+
+def _optional_number(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    value_str = str(value).strip()
+    return value_str or None
 
 
 def _format_range(min_val: float | None, max_val: float | None) -> str:
