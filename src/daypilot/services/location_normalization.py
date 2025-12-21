@@ -3,11 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from opencage.geocoder import OpenCageGeocode
 from opencage.geocoder import (
     ForbiddenError,
     InvalidInputError,
     NotAuthorizedError,
+    OpenCageGeocode,
     RateLimitExceededError,
     UnknownError,
 )
