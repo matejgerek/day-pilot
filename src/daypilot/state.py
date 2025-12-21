@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TypedDict
 
 from langgraph.graph import MessagesState
@@ -21,6 +22,7 @@ class DayPlanState(MessagesState):
     priorities: list[str]
     work_hours: str  # e.g., "9am-5pm"
     fixed_commitments: list[str]
+    now: datetime
 
     # Processed data
     total_available_hours: float

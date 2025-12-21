@@ -53,9 +53,11 @@ def analyze_priorities_node(state: DayPlanState) -> DayPlanState:
 
     priorities_text = "\n".join(state["priorities"])
     commitments_text = "\n".join(state["fixed_commitments"])
+    now_str = state["now"].strftime("%A, %B %d, %Y at %I:%M %p")
 
     prompt = f"""You are a productivity assistant helping someone plan their workday.
 
+Current date and time: {now_str}
 Work hours: {state["work_hours"]}
 Fixed commitments:
 {commitments_text if commitments_text else "None"}

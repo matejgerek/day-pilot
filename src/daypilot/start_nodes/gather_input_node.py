@@ -9,7 +9,8 @@ console = Console()
 
 
 def gather_input_node(state: DayPlanState) -> DayPlanState:
-    today_str = datetime.now().strftime("%A, %B %d, %Y")
+    now_local = datetime.now().astimezone()
+    today_str = now_local.strftime("%A, %B %d, %Y at %I:%M %p")
     console.print(
         f"\n[bold blue]📅 Today is {today_str}[/bold blue]\n",
     )
@@ -43,5 +44,6 @@ def gather_input_node(state: DayPlanState) -> DayPlanState:
     state["priorities"] = priorities
     state["work_hours"] = work_hours
     state["fixed_commitments"] = commitments
+    state["now"] = now_local
 
     return state

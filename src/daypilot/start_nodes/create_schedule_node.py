@@ -38,9 +38,11 @@ def create_schedule_node(state: DayPlanState) -> DayPlanState:
     """Generate time-blocked schedule"""
     tasks_json = json.dumps(state["tasks"], indent=2)
     commitments_text = "\n".join(f"- {c}" for c in state["fixed_commitments"]) or "None"
+    now_str = state["now"].strftime("%A, %B %d, %Y at %I:%M %p")
 
     prompt = f"""Create a time-blocked schedule for the workday.
 
+Current date and time: {now_str}
 Work hours: {state["work_hours"]}
 Available hours: {state["total_available_hours"]}
 
