@@ -15,7 +15,7 @@ def present_plan_node(state: DayPlanState) -> DayPlanState:
     summary = f"""
 📋 Your Day Plan
 
-Available: {state["total_available_hours"]} hours
+Available: {state["total_available_hours"]:.2f} hours
 
 ⚡ NON-NEGOTIABLES (must complete):
 {chr(10).join(f"  {i + 1}. {task}" for i, task in enumerate(state["non_negotiables"]))}
