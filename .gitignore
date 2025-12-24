@@ -17,3 +17,6 @@ wheels/
 
 # local app data
 .daypilot/
+
+# langgraph
+.langgraph_api

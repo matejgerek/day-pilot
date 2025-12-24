@@ -1,0 +1,9 @@
+{
+    "dependencies": [
+      "./src"
+    ],
+    "graphs": {
+      "capture": "./src/daypilot/capture/agent.py:create_capture_agent"
+    },
+    "env": ".env"
+  }

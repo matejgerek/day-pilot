@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "langchain-openai>=1.1.0",
     "langgraph>=1.0.4",
+    "langgraph-cli[inmem]>=0.4.11",
     "numpy>=2.4.0",
     "opencage>=3.2.0",
     "openmeteo-requests>=1.7.4",
@@ -16,11 +17,24 @@ dependencies = [
     "retry-requests>=2.0.0",
     "rich>=14.2.0",
     "ruff>=0.14.8",
+    "textual>=6.11.0",
+    "textual-dev>=1.8.0",
     "typer>=0.20.0",
 ]
 
 [project.scripts]
 cli = "daypilot.cli:app"
+daypilot-tui = "daypilot.tui:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
 line-length = 100
